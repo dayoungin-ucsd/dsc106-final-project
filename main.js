@@ -96,6 +96,33 @@ Promise.all([
       .duration(300)
       .call(zoom.scaleBy, 1.25);
   });
+
+  let playing = false;
+  let playTimer = null;
+
+  d3.select("#playYear").on("click", () => {
+    playing = !playing;
+
+    d3.select("#playYear").text(playing ? "⏸" : "▶");
+
+    if (playing) {
+      playTimer = setInterval(() => {
+        state.year += 10;
+
+        if (state.year > 2100) {
+          state.year = 2020;
+        }
+
+        d3.select("#yearSlider").property("value", state.year);
+        d3.select("#yearValue").text(state.year);
+        d3.select("#mapYearTitle").text(state.year);
+
+        drawMap();
+      }, 700);
+    } else {
+      clearInterval(playTimer);
+    }
+  });
 });
 
 function getCountryData(name) {
