@@ -1,1 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>A Warmer Tomorrow</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="https://unpkg.com/topojson-client@3"></script>
+</head>
+<body>
+  <header class="top-nav">
+    <div class="brand">
+      <div class="brand-icon">🌎</div>
+      <span>A WARMER TOMORROW</span>
+    </div>
+    <nav>
+      <a class="active" href="#explore">Explore</a>
+      <a href="#about">About the Data</a>
+      <a href="#planet">Our Planet</a>
+      <a href="#how">How It Works</a>
+      <a class="pill" href="#takeaways">Take Action</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">EXPLORE THE FUTURE</p>
+        <h1>What kind of world<br />will we leave behind?</h1>
+        <p class="subtitle">
+          Explore projected temperature changes under different emissions scenarios
+          from CMIP6 climate models.
+        </p>
+
+        <div class="team-info">
+          <p><strong>Team:</strong> RE:Visualized &nbsp; | &nbsp;  Dayoung In, Sujal Sirimilla, Salina Tang</p>
+        </div>
+
+        <div class="feature-row">
+          <div class="feature">
+            <div class="feature-icon">🗺️</div>
+            <div>
+              <strong>Explore the Map</strong>
+              <p>See how warming varies around the world.</p>
+            </div>
+          </div>
+          <div class="feature">
+            <div class="feature-icon">📊</div>
+            <div>
+              <strong>Compare Scenarios</strong>
+              <p>See the difference our choices can make.</p>
+            </div>
+          </div>
+          <div class="feature">
+            <div class="feature-icon">🔍</div>
+            <div>
+              <strong>Look Closer</strong>
+              <p>Click a country to view detailed projections.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="hero-bg"></div>
+      <div class="hero-card">
+        <div class="thermo">🌡️</div>
+        <div>
+          <h3>The future is<br />not predetermined.</h3>
+          <p>Different choices today lead to different futures.</p>
+          <a href="#explore">Learn more →</a>
+        </div>
+      </div>
+    </section>
+
+    <section id="explore" class="controls-card">
+      <div class="control-block">
+        <label for="scenarioSelect">EMISSIONS SCENARIO</label>
+        <select id="scenarioSelect">
+          <option value="ssp585">SSP5-8.5 (High Emissions)</option>
+          <option value="ssp126">SSP1-2.6 (Low Emissions)</option>
+        </select>
+      </div>
+
+      <div class="control-block year-control">
+        <label for="yearSlider">YEAR</label>
+        <div class="year-line">
+          <span id="yearValue">2100</span>
+          <input id="yearSlider" type="range" min="2020" max="2100" step="10" value="2100" />
+        </div>
+        <div class="year-labels">
+          <span>2020</span>
+          <span>2100</span>
+        </div>
+      </div>
+
+      <div class="control-block">
+        <label for="variableSelect">VARIABLE</label>
+        <select id="variableSelect">
+          <option>Mean Temperature Change (°C)</option>
+        </select>
+      </div>
+
+      <div class="source-block">
+        <span class="info-icon">i</span>
+        <div>
+          <strong>CMIP6 models via</strong><br />
+          <a href="https://console.cloud.google.com/marketplace/product/noaa-public/cmip6" target="_blank">
+            NOAA on Google Cloud
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <section class="dashboard-grid">
+      <section class="panel map-panel">
+        <div class="panel-header">
+          <h2>Projected Temperature Change in <span id="mapYearTitle">2100</span> (°C)</h2>
+          <!-- <button class="icon-button" aria-label="About map">i</button> -->
+        </div>
+        <div class="map-wrap">
+          <svg id="worldMap"></svg>
+          <div id="tooltip" class="tooltip hidden"></div>
+        </div>
+        <div class="map-footer">
+          <div class="map-footer-left">
+            <div class="legend">
+              <div class="legend-gradient"></div>
+              <div class="legend-labels">
+                <span>0</span><span>1.5</span><span>3</span><span>4.5</span><span>6</span><span>7.5</span><span>9+</span>
+              </div>
+            </div>
+            <p class="hint">ⓘ Click on a country to see details</p>
+          </div>
+          
+          <div class="zoom-controls">
+            <button id="zoomOut">−</button>
+            <button id="zoomIn">+</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel detail-panel">
+        <div class="detail-header">
+          <h2><span id="countryFlag">🇺🇸</span> <span id="countryName">United States</span></h2>
+          <button id="clearSelection" class="close-btn">×</button>
+        </div>
+
+        <div class="stat-row">
+          <div class="stat-card">
+            <p>Projected Change by 2100<br /><small>relative to 1850–1900</small></p>
+            <div class="stat-split">
+              <div>
+                <span class="blue">SSP1-2.6</span>
+                <strong id="lowStat">+2.6°C</strong>
+                <small>Low Emissions</small>
+              </div>
+              <div>
+                <span class="red">SSP5-8.5</span>
+                <strong id="highStat">+5.6°C</strong>
+                <small>High Emissions</small>
+              </div>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <p>Warming Since<br />Pre-industrial (2020)</p>
+            <strong class="orange" id="currentStat">+1.2°C</strong>
+          </div>
+
+          <div class="stat-card">
+            <p>Rank<br /><small>of 195 countries</small></p>
+            <strong id="rankStat">18 / 195</strong>
+            <small>Among projected warming by 2100</small>
+          </div>
+        </div>
+
+        <div class="chart-header">
+          <h3>Temperature Change Over Time (°C)</h3>
+          <div class="chart-legend">
+            <span><i class="dot blue-dot"></i> SSP1-2.6</span>
+            <span><i class="dot red-dot"></i> SSP5-8.5</span>
+          </div>
+        </div>
+        <svg id="lineChart"></svg>
+        <p class="note">Shaded area can later represent model uncertainty or scenario range.</p>
+      </section>
+    </section>
+
+    <section id="takeaways" class="takeaways">
+      <div class="takeaway-title">
+        <small>KEY TAKEAWAYS</small>
+        <h2>What the data tells us</h2>
+      </div>
+      <div class="takeaway">
+        <div class="take-icon red-bg">🌡</div>
+        <div>
+          <strong>Extreme Heat Increases</strong>
+          <p>More frequent and intense heatwaves are projected worldwide.</p>
+        </div>
+      </div>
+      <div class="takeaway">
+        <div class="take-icon orange-bg">🔥</div>
+        <div>
+          <strong>Warming Is Uneven</strong>
+          <p>Higher latitudes are projected to warm faster than many other regions.</p>
+        </div>
+      </div>
+      <div class="takeaway">
+        <div class="take-icon cyan-bg">🌍</div>
+        <div>
+          <strong>Regional Differences Matter</strong>
+          <p>Climate change impacts vary significantly across countries and regions.</p>
+        </div>
+      </div>
+      <div class="takeaway">
+        <div class="take-icon green-bg">🌿</div>
+        <div>
+          <strong>Our Choices Matter</strong>
+          <p>Lower emissions today can lead to a cooler, more livable tomorrow.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="about" class="writeup-section">
+      <h2>Prototype Writeup</h2>
+      <div class="writeup-grid">
+        <div>
+          <h3>A</h3>
+          <p>
+            TEXT
+          </p>
+        </div>
+        <div>
+          <h3>B</h3>
+          <p>
+            TEXT
+          </p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="main.js"></script>
+</body>
+</html>
 
