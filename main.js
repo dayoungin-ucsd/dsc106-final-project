@@ -16,7 +16,7 @@ const scenarioKey = {
 };
 
 const colorScale = d3.scaleLinear()
-  .domain([0, 1, 2, 3, 4, 5, 6, 7, 8])
+  .domain([0, 1, 2, 3, 5, 7, 8, 9, 12])
   .range([
     "#dceefb",
     "#b6dff6",
