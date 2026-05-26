@@ -748,3 +748,15 @@ input[type="range"] {
   font-size: 13px;
   font-weight: 600;
 }
+
+.play-btn {
+  width: 38px;
+  height: 27px;
+  border: none;
+  border-radius: 50%;
+  background: #f0442e;
+  color: white;
+  font-size: 14px;
+  font-weight: 900;
+  cursor: pointer;
+}
