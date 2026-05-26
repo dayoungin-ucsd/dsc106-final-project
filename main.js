@@ -7,7 +7,6 @@ const state = {
 };
 
 const countryNameFix = new Map([
-  ["United States of America", "United States"],
   ["Russian Federation", "Russia"]
 ]);
 
@@ -127,7 +126,12 @@ Promise.all([
 
 function getCountryData(name) {
   const fixedName = countryNameFix.get(name) || name;
-  return state.data.countries.find(d => d.name === fixedName);
+
+  const countries = Array.isArray(state.data.countries)
+    ? state.data.countries
+    : Object.values(state.data.countries);
+
+  return countries.find(d => d.name === fixedName);
 }
 
 function getProjectedValue(country, scenario, year) {
@@ -208,7 +212,12 @@ function drawMap() {
 }
 
 function updateDetail() {
-  const country = state.data.countries.find(d => d.name === state.selectedCountry) || state.data.countries[0];
+  const countries = Array.isArray(state.data.countries)
+    ? state.data.countries
+    : Object.values(state.data.countries);
+
+  const country =
+    countries.find(d => d.name === state.selectedCountry) || countries[0];
 
   d3.select("#countryFlag").text(country.flag);
   d3.select("#countryName").text(country.name);
@@ -219,7 +228,12 @@ function updateDetail() {
 }
 
 function drawLineChart() {
-  const country = state.data.countries.find(d => d.name === state.selectedCountry) || state.data.countries[0];
+  const countries = Array.isArray(state.data.countries)
+    ? state.data.countries
+    : Object.values(state.data.countries);
+
+  const country =
+    countries.find(d => d.name === state.selectedCountry) || countries[0];
   const data = country.series;
 
   const margin = { top: 16, right: 22, bottom: 32, left: 42 };
