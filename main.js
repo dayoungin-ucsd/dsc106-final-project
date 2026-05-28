@@ -1,7 +1,7 @@
 const state = {
   scenario: "ssp585",
   year: 2100,
-  selectedCountry: "United States",
+  selectedCountry: "United States of America",
   data: null,
   geo: null
 };
@@ -47,6 +47,12 @@ const mapLayer = svgMap.append("g");
 
 const zoom = d3.zoom()
   .scaleExtent([1, 6])
+
+  .translateExtent([
+    [-200, -100],
+    [widthMap + 200, heightMap + 200]
+  ])
+
   .on("zoom", (event) => {
     mapLayer.attr("transform", event.transform);
   });
@@ -96,6 +102,12 @@ Promise.all([
       .call(zoom.scaleBy, 1.25);
   });
 
+  d3.select("#resetZoom").on("click", () => {
+  svgMap.transition()
+    .duration(500)
+    .call(zoom.transform, d3.zoomIdentity);
+  });
+
   let playing = false;
   let playTimer = null;
 
@@ -122,6 +134,82 @@ Promise.all([
       clearInterval(playTimer);
     }
   });
+
+  const steps = document.querySelectorAll(".step");
+  const visualText = document.querySelector("#scrollyVisualText");
+  const visual = document.querySelector("#scrollyVisual");
+  const visualImg = document.querySelector("#scrollyVisualImg");
+
+  const stepObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+
+      steps.forEach(s => s.classList.remove("active"));
+      entry.target.classList.add("active");
+
+      const step = entry.target.dataset.step;
+
+      if (step === "1") {
+        visualText.textContent = "2020 warming map";
+
+        visualImg.style.opacity = 0;
+
+        setTimeout(() => {
+          visualImg.src = "images/story-2020.png";
+          visualImg.style.opacity = 1;
+        }, 180);
+
+        visual.classList.remove("mini-map-placeholder", "mini-map-hot");
+        visual.classList.add("mini-map-placeholder");
+        setStoryState("ssp126", 2020);
+      }
+
+      if (step === "2") {
+        visualText.textContent = "2100 SSP5-8.5 warming";
+
+        visualImg.style.opacity = 0;
+
+        setTimeout(() => {
+          visualImg.src = "images/story-2100-high.png";
+          visualImg.style.opacity = 1;
+        }, 180);
+
+        visual.classList.remove("mini-map-placeholder", "mini-map-hot");
+        visual.classList.add("mini-map-hot");
+        setStoryState("ssp585", 2100);
+      }
+
+      if (step === "3") {
+        visualText.textContent = "SSP1-2.6 vs SSP5-8.5";
+
+        visualImg.style.opacity = 0;
+
+        setTimeout(() => {
+          visualImg.src = "images/story-compare.png";
+          visualImg.style.opacity = 1;
+        }, 180);
+
+        visual.classList.remove("mini-map-placeholder", "mini-map-hot");
+        visual.classList.add("mini-map-placeholder");
+        setStoryState("ssp126", 2100);
+      }
+
+      if (step === "4") {
+        visualText.textContent = "Explore the dashboard";
+
+        visualImg.style.opacity = 0;
+
+        setTimeout(() => {
+          visualImg.src = "images/dashboard.png";
+          visualImg.style.opacity = 1;
+        }, 180);
+
+        setStoryState("ssp585", 2100);
+      }
+    });
+  }, { threshold: 0.6 });
+
+  steps.forEach(step => stepObserver.observe(step));
 });
 
 function getCountryData(name) {
@@ -141,6 +229,18 @@ function getProjectedValue(country, scenario, year) {
   const target = country[scenarioKey[scenario]];
   const t = Math.max(0, (year - 2020) / 80);
   return current + t * (target - current);
+}
+
+function setStoryState(scenario, year) {
+  state.scenario = scenario;
+  state.year = year;
+
+  d3.select("#scenarioSelect").property("value", scenario);
+  d3.select("#yearSlider").property("value", year);
+  d3.select("#yearValue").text(year);
+  d3.select("#mapYearTitle").text(year);
+
+  drawMap();
 }
 
 function drawMap() {
@@ -187,28 +287,31 @@ function drawMap() {
     .on("mouseleave", () => tooltip.classed("hidden", true))
     .on("click", (event, d) => {
       const name = countryNameFix.get(d.properties.name) || d.properties.name;
-      if (getCountryData(name)) {
-        state.selectedCountry = name;
+
+      if (!getCountryData(name)) return;
+
+      if (state.selectedCountry === name) {
+        state.selectedCountry = "United States of America";
+
+        mapLayer.selectAll(".country")
+          .classed("selected", false);
+
         updateDetail();
         drawLineChart();
+        return;
       }
+
+      state.selectedCountry = name;
+
+      mapLayer.selectAll(".country")
+        .classed("selected", false);
+
+      d3.select(event.currentTarget)
+        .classed("selected", true);
+
+      updateDetail();
+      drawLineChart();
     });
-
-  // svgMap.append("text")
-  //   .attr("x", widthMap - 58)
-  //   .attr("y", heightMap - 72)
-  //   .attr("font-size", 22)
-  //   .attr("font-weight", 900)
-  //   .attr("fill", "#0f1e35")
-  //   .text("+");
-
-  // svgMap.append("text")
-  //   .attr("x", widthMap - 55)
-  //   .attr("y", heightMap - 42)
-  //   .attr("font-size", 26)
-  //   .attr("font-weight", 900)
-  //   .attr("fill", "#0f1e35")
-  //   .text("−");
 }
 
 function updateDetail() {
@@ -236,7 +339,7 @@ function drawLineChart() {
     countries.find(d => d.name === state.selectedCountry) || countries[0];
   const data = country.series;
 
-  const margin = { top: 16, right: 22, bottom: 32, left: 42 };
+  const margin = { top: 35, right: 22, bottom: 32, left: 42 };
   const width = 610;
   const height = 190;
   const innerW = width - margin.left - margin.right;
@@ -290,6 +393,90 @@ function drawLineChart() {
     .attr("class", "line-high")
     .attr("d", lineHigh);
 
+    g.append("path")
+  .datum(data)
+  .attr("class", "line-high")
+  .attr("d", lineHigh);
+
+const focus = g.append("g")
+  .style("display", "none");
+
+focus.append("line")
+  .attr("class", "hover-line")
+  .attr("y1", 0)
+  .attr("y2", innerH);
+
+focus.append("circle")
+  .attr("class", "hover-dot-low")
+  .attr("r", 5);
+
+focus.append("circle")
+  .attr("class", "hover-dot-high")
+  .attr("r", 5);
+
+focus.append("rect")
+  .attr("class", "hover-label-bg")
+  .attr("rx", 10)
+  .attr("ry", 10);
+
+focus.append("text")
+  .attr("class", "hover-text")
+  .attr("x", innerW / 2)
+  .attr("y", -17)
+  .attr("text-anchor", "middle");
+
+const bisectYear = d3.bisector(d => d.year).left;
+
+g.append("rect")
+  .attr("width", innerW)
+  .attr("height", innerH)
+  .attr("fill", "transparent")
+  .on("mouseenter", () => focus.style("display", null))
+  .on("mouseleave", () => focus.style("display", "none"))
+  .on("mousemove", (event) => {
+    const [mx] = d3.pointer(event);
+    const year = x.invert(mx);
+    let i = bisectYear(data, year);
+
+    if (i >= data.length) i = data.length - 1;
+    if (i > 0) {
+      const left = data[i - 1];
+      const right = data[i];
+
+      i = (year - left.year < right.year - year) ? i - 1 : i;
+    }
+
+    const d = data[i];
+
+    focus.select(".hover-line")
+      .attr("x1", x(d.year))
+      .attr("x2", x(d.year));
+
+    focus.select(".hover-dot-low")
+      .attr("cx", x(d.year))
+      .attr("cy", y(d.ssp126));
+
+    focus.select(".hover-dot-high")
+      .attr("cx", x(d.year))
+      .attr("cy", y(d.ssp585));
+
+    const text = `${d.year}: \u00A0\u00A0SSP1-2.6 +${d.ssp126.toFixed(1)}°C \u00A0\u00A0|\u00A0\u00A0 SSP5-8.5 +${d.ssp585.toFixed(1)}°C`;
+
+    focus.select(".hover-text")
+      .attr("x", innerW / 2)
+      .attr("y", -17)
+      .attr("text-anchor", "middle")
+      .text(text);
+
+    const bbox = focus.select(".hover-text").node().getBBox();
+
+    focus.select(".hover-label-bg")
+      .attr("x", bbox.x - 12)
+      .attr("y", bbox.y - 6)
+      .attr("width", bbox.width + 24)
+      .attr("height", bbox.height + 12);
+  });
+
   g.append("line")
     .attr("x1", x(2020))
     .attr("x2", x(2020))
@@ -305,3 +492,13 @@ function drawLineChart() {
     .attr("font-size", 11)
     .text("Future Projections →");
 }
+
+window.addEventListener("scroll", () => {
+  const nav = document.querySelector(".top-nav");
+
+  if (window.scrollY > 80) {
+    nav.classList.add("visible");
+  } else {
+    nav.classList.remove("visible");
+  }
+});
